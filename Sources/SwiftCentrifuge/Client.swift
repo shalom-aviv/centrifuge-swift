@@ -29,8 +29,36 @@ public protocol CentrifugeConnectionTokenGetter: NSObject {
     func getConnectionToken(_ event: CentrifugeConnectionTokenEvent, completion: @escaping (Result<String, Error>) -> ())
 }
 
+public struct CentrifugeUpdateClientConfig {
+    public var headers: [String: String?]
+    
+    public init(headers: [String : String?]) {
+        self.headers = headers
+    }
+}
+
+public protocol CentrifugeUpdateConnectionConfigGetter: NSObject {
+    func getConnectionConfigUpdate(completion: @escaping (Result<CentrifugeUpdateClientConfig?, Error>) -> ())
+}
+
 public struct CentrifugeClientConfig {
-    public init(timeout: Double = 5.0, headers: [String : String] = [String:String](), tlsSkipVerify: Bool = false, minReconnectDelay: Double = 0.5, maxReconnectDelay: Double = 20.0, maxServerPingDelay: Double = 10.0, name: String = "swift", version: String = "", token: String = "", data: Data? = nil, debug: Bool = false, useNativeWebSocket: Bool = false, tokenGetter: CentrifugeConnectionTokenGetter? = nil, logger: CentrifugeLogger? = nil) {
+    public init(
+        timeout: Double = 5.0,
+        headers: [String : String] = [String:String](),
+        tlsSkipVerify: Bool = false,
+        minReconnectDelay: Double = 0.5,
+        maxReconnectDelay: Double = 20.0,
+        maxServerPingDelay: Double = 10.0,
+        name: String = "swift",
+        version: String = "",
+        token: String = "",
+        data: Data? = nil,
+        debug: Bool = false,
+        useNativeWebSocket: Bool = false,
+        tokenGetter: CentrifugeConnectionTokenGetter? = nil,
+        configUpdateGetter: CentrifugeUpdateConnectionConfigGetter? = nil,
+        logger: CentrifugeLogger? = nil
+    ) {
         self.timeout = timeout
         self.headers = headers
         self.tlsSkipVerify = tlsSkipVerify
@@ -44,6 +72,7 @@ public struct CentrifugeClientConfig {
         self.debug = debug
         self.useNativeWebSocket = useNativeWebSocket
         self.tokenGetter = tokenGetter
+        self.configUpdateGetter = configUpdateGetter
         self.logger = logger
     }
     
@@ -57,6 +86,7 @@ public struct CentrifugeClientConfig {
     public var version = ""
     public var token: String = ""
     public weak var tokenGetter: CentrifugeConnectionTokenGetter?
+    public weak var configUpdateGetter: CentrifugeUpdateConnectionConfigGetter?
     public var data: Data? = nil
     public var debug: Bool = false
 	public var logger: CentrifugeLogger?
@@ -223,18 +253,21 @@ public class CentrifugeClient {
      */
     public func update(headers: [String: String?]) {
         self.syncQueue.async { [weak self] in
-            guard let strongSelf = self else { return }
-            
-            if let conn = strongSelf.conn {
-                conn.update(headers: headers)
-            } else {
-                for (key, value) in headers {
-                    guard let value else {
-                        strongSelf.config.headers.removeValue(forKey: key)
-                        continue
-                    }
-                    strongSelf.config.headers[key] = value
+            self?.internalUpdate(headers: headers)
+        }
+    }
+    
+    private func internalUpdate(headers: [String: String?]) {
+        assertIsOnQueue(syncQueue)
+        if let conn = conn {
+            conn.update(headers: headers)
+        } else {
+            for (key, value) in headers {
+                guard let value else {
+                    config.headers.removeValue(forKey: key)
+                    continue
                 }
+                config.headers[key] = value
             }
         }
     }
@@ -502,14 +535,44 @@ internal extension CentrifugeClient {
     func getConnectionToken(completion: @escaping (Result<String, Error>)->()) {
         self.syncQueue.async { [weak self] in
             guard let strongSelf = self else { return }
-            guard strongSelf.config.tokenGetter != nil else { return }
-            strongSelf.config.tokenGetter!.getConnectionToken(
-                CentrifugeConnectionTokenEvent()
-            ) {[weak self] result in
+            guard let tokenGetter = strongSelf.config.tokenGetter else { return }
+            
+            tokenGetter.getConnectionToken(CentrifugeConnectionTokenEvent()) {[weak self] result in
                 guard let strongSelf = self else { return }
                 strongSelf.syncQueue.async { [weak self] in
                     guard self != nil else { return }
                     completion(result)
+                }
+            }
+        }
+    }
+
+    private func updateClientConfig(completion: @escaping (Result<Void, Error>)->()) {
+        self.syncQueue.async { [weak self] in
+            guard let strongSelf = self else {
+                completion(.success(()))
+                return
+            }
+            guard let configUpdateGetter = strongSelf.config.configUpdateGetter else {
+                completion(.success(()))
+                return
+            }
+            
+            configUpdateGetter.getConnectionConfigUpdate { [weak self] result in
+                guard let strongSelf = self else { return }
+                strongSelf.syncQueue.async { [weak self] in
+                    guard let self else { return }
+                    
+                    switch result {
+                    case .success(let updates):
+                        if let updates {
+                            self.internalUpdate(headers: updates.headers)
+                        }
+                        completion(.success(()))
+                        
+                    case .failure(let error):
+                        completion(.failure(error))
+                    }
                 }
             }
         }
@@ -768,8 +831,27 @@ fileprivate extension CentrifugeClient {
         self.reconnectTask = DispatchWorkItem { [weak self] in
             guard let strongSelf = self else { return }
             guard strongSelf.state == .connecting else { return }
-            strongSelf.log.debug("start reconnecting")
-            strongSelf.conn?.connect()
+            
+            guard
+                strongSelf.delegate?.onUpdateClientConfigParams(strongSelf) == .some(true)
+            else {
+                strongSelf.log.debug("start reconnecting")
+                strongSelf.conn?.connect()
+                return
+            }
+            
+            strongSelf.updateClientConfig { [weak self] result in
+                guard let strongSelf = self else { return }
+                
+                switch result {
+                case .success:
+                    strongSelf.log.debug("start reconnecting (connection params updated)")
+                    strongSelf.conn?.connect()
+                case .failure(let error):
+                    strongSelf.log.debug("failed update client config: \(error)\nstart reconnect with old params")
+                    strongSelf.conn?.connect()
+                }
+            }
         }
         self.log.debug("schedule reconnect in \(delay) seconds")
         self.syncQueue.asyncAfter(deadline: .now() + delay, execute: self.reconnectTask!)
