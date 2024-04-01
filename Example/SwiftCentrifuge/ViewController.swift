@@ -9,6 +9,23 @@
 import UIKit
 import SwiftCentrifuge
 
+enum RunParams {
+    static let url = "ws://127.0.0.1:8000/connection/websocket?cf_protocol=protobuf"
+
+    /// StarscreamWebSocket handle real server response code
+    /// and provide it in delegate method
+    /// func onDisconnected(_ c: CentrifugeClient, _ e: CentrifugeDisconnectedEvent)
+    static let useNativeWebSocket = false
+
+    static let authTokenInHeaders: String? = nil
+    static let newAuthTokenInHeaders: String? = nil
+    
+    static let authHeaderKey = "Authorization"
+    static func authHeaderValue(token: String) -> String { "Bearer \(token)" }
+
+    static let failedMiddlewearAuthorization_StatusCode: Int? = nil
+}
+
 class ViewController: UIViewController {
     
     @IBOutlet weak var clientState: UILabel!
@@ -16,6 +33,8 @@ class ViewController: UIViewController {
     @IBOutlet weak var newMessage: UITextField!
     @IBOutlet weak var connectButton: UIButton!
     
+    private let middleWareAuthErrorcode = 200
+
     private var client: CentrifugeClient?
     private var sub: CentrifugeSubscription?
     
@@ -25,12 +44,16 @@ class ViewController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(self.connectClient(_:)), name: UIApplication.didBecomeActiveNotification, object: nil)
         
         let config = CentrifugeClientConfig(
-            token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0c3VpdGVfand0In0.hPmHsVqvtY88PvK4EmJlcdwNuKFuy3BGaF7dMaKdPlw",
+            headers: headers(token: RunParams.authHeaderKey),
+            token: "",
+            useNativeWebSocket: RunParams.useNativeWebSocket,
             tokenGetter: self,
-			logger: PrintLogger()
+            logger: PrintLogger()
         )
-        let url = "ws://127.0.0.1:8000/connection/websocket?cf_protocol=protobuf"
-        self.client = CentrifugeClient(endpoint: url, config: config, delegate: self)
+
+
+        self.client = CentrifugeClient(endpoint: RunParams.url, config: config, delegate: self)
+
         do {
             sub = try self.client?.newSubscription(channel: "chat:index", delegate: self)
             sub!.subscribe()
@@ -38,8 +61,9 @@ class ViewController: UIViewController {
             print("Can not create subscription: \(error)")
             return
         }
+        
     }
-
+    
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         client?.connect()
@@ -92,7 +116,15 @@ class ViewController: UIViewController {
 
 extension ViewController: CentrifugeConnectionTokenGetter {
     func getConnectionToken(_ event: CentrifugeConnectionTokenEvent, completion: @escaping (Result<String, Error>) -> ()) {
-        completion(.success(""))
+        completion(getNewToken())
+    }
+        
+    /// SPIKE 1: getNewToken() is synced method
+    func getNewToken() -> Result<String, Error> {
+        guard let newToken = RunParams.newAuthTokenInHeaders else {
+            return .failure(CentrifugeError.unauthorized)
+        }
+        return .success(newToken)
     }
 }
 
@@ -112,7 +144,7 @@ extension ViewController: CentrifugeClientDelegate {
             self?.connectButton.setTitle("Connect", for: .normal)
         }
     }
-    
+
     func onConnecting(_ c: CentrifugeClient, _ e: CentrifugeConnectingEvent) {
         print("connecting with code", e.code, "and reason", e.reason)
         DispatchQueue.main.async { [weak self] in
@@ -146,7 +178,29 @@ extension ViewController: CentrifugeClientDelegate {
     }
     
     func onError(_ client: CentrifugeClient, _ event: CentrifugeErrorEvent) {
-        print("client error \(event.error)")
+        ///SPIKE 2:
+        /// WSError - made public to get access for server status code
+        guard
+            case CentrifugeError.transportError(let error) = event.error,
+            let err = error as? WSError,
+            err.message == "Invalid HTTP upgrade",
+            err.code == middleWareAuthErrorcode
+        else {
+            print("client error \(event.error)")
+            return
+        }
+
+        ///SPIKE 3:
+        /// getNewToken - is not sync method for demo purposes
+        /// In real life befire next reconnect we need to have "await config chages" point
+        
+        switch getNewToken() {
+        case .success(let newToken):
+            let newHeaders = headers(token: newToken)
+            client.update(headers: newHeaders)
+        case .failure(let error):
+            print("Middlewear auth error: \(event.error)\nCan not update authToken: \(error)")
+        }
     }
 }
 
@@ -197,5 +251,14 @@ extension ViewController: CentrifugeSubscriptionDelegate {
     
     func onLeave(_ s: CentrifugeSubscription, _ e: CentrifugeLeaveEvent) {
         print("client left channel \(s.channel), user ID \(e.user)")
+    }
+}
+
+extension ViewController {
+    func headers(token: String?) -> [String: String] {
+        guard let token else {
+            return [:]
+        }
+        return [RunParams.authHeaderKey: RunParams.authHeaderValue(token: token)]
     }
 }
