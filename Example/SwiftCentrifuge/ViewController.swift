@@ -9,6 +9,20 @@
 import UIKit
 import SwiftCentrifuge
 
+enum RunParams {
+    static let url = "ws://127.0.0.1:8000/connection/websocket?cf_protocol=protobuf"
+    
+    static let useNativeWebSocket = false
+
+    static let authTokenInHeaders: String? = nil
+    static let newAuthTokenInHeaders: String? = nil
+
+    static let authHeaderKey = "Authorization"
+    static func authHeaderValue(token: String) -> String { "Bearer \(token)" }
+
+    static let failedMiddlewearAuthorization_StatusCode: Int? = nil
+}
+
 class ViewController: UIViewController {
     
     @IBOutlet weak var clientState: UILabel!
@@ -16,6 +30,7 @@ class ViewController: UIViewController {
     @IBOutlet weak var newMessage: UITextField!
     @IBOutlet weak var connectButton: UIButton!
     
+    private var needUpdateConfigParams = false
     private var client: CentrifugeClient?
     private var sub: CentrifugeSubscription?
     
@@ -25,12 +40,17 @@ class ViewController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(self.connectClient(_:)), name: UIApplication.didBecomeActiveNotification, object: nil)
         
         let config = CentrifugeClientConfig(
-            token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0c3VpdGVfand0In0.hPmHsVqvtY88PvK4EmJlcdwNuKFuy3BGaF7dMaKdPlw",
+            headers: headers(token: RunParams.authHeaderKey),
+            token: "",
+            useNativeWebSocket: RunParams.useNativeWebSocket,
             tokenGetter: self,
-			logger: PrintLogger()
+            configUpdateGetter: self,
+            logger: PrintLogger()
         )
-        let url = "ws://127.0.0.1:8000/connection/websocket?cf_protocol=protobuf"
-        self.client = CentrifugeClient(endpoint: url, config: config, delegate: self)
+
+
+        self.client = CentrifugeClient(endpoint: RunParams.url, config: config, delegate: self)
+
         do {
             sub = try self.client?.newSubscription(channel: "chat:index", delegate: self)
             sub!.subscribe()
@@ -38,8 +58,9 @@ class ViewController: UIViewController {
             print("Can not create subscription: \(error)")
             return
         }
+        
     }
-
+    
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         client?.connect()
@@ -92,11 +113,45 @@ class ViewController: UIViewController {
 
 extension ViewController: CentrifugeConnectionTokenGetter {
     func getConnectionToken(_ event: CentrifugeConnectionTokenEvent, completion: @escaping (Result<String, Error>) -> ()) {
-        completion(.success(""))
+        getNewToken(completion: completion)
+    }
+        
+    func getNewToken(completion: @escaping (Result<String, Error>) -> ()) {
+        guard let newToken = RunParams.newAuthTokenInHeaders else {
+            completion(.failure(CentrifugeError.unauthorized))
+            return
+        }
+        completion(.success(newToken))
+        return
+    }
+}
+
+
+extension ViewController: CentrifugeUpdateConnectionConfigGetter {
+    func getConnectionConfigUpdate(completion: @escaping (Result<CentrifugeUpdateClientConfig?, Error>) -> ()) {
+        getNewToken { [weak self] result in
+            guard let self else {
+                return
+            }
+
+            switch result {
+            case .success(let newToken):
+                let updateHeaders = self.headers(token: newToken) as [String: String?]
+                completion(.success(CentrifugeUpdateClientConfig(headers: updateHeaders)))
+            case .failure(let error):
+                completion(.failure(error))
+            }
+        }
     }
 }
 
 extension ViewController: CentrifugeClientDelegate {
+    func onUpdateClientConfigParams(_ client: CentrifugeClient) -> Bool {
+        let result = needUpdateConfigParams
+        needUpdateConfigParams = false
+        return result
+    }
+    
     func onConnected(_ c: CentrifugeClient, _ e: CentrifugeConnectedEvent) {
         print("connected with id", e.client)
         DispatchQueue.main.async { [weak self] in
@@ -112,7 +167,7 @@ extension ViewController: CentrifugeClientDelegate {
             self?.connectButton.setTitle("Connect", for: .normal)
         }
     }
-    
+
     func onConnecting(_ c: CentrifugeClient, _ e: CentrifugeConnectingEvent) {
         print("connecting with code", e.code, "and reason", e.reason)
         DispatchQueue.main.async { [weak self] in
@@ -146,7 +201,19 @@ extension ViewController: CentrifugeClientDelegate {
     }
     
     func onError(_ client: CentrifugeClient, _ event: CentrifugeErrorEvent) {
-        print("client error \(event.error)")
+        ///SPIKE:
+        /// WSError - made public to get access for server status code
+        guard
+            case CentrifugeError.transportError(let error) = event.error,
+            let err = error as? WSError,
+            err.type == .upgradeError,
+            err.code ==  RunParams.failedMiddlewearAuthorization_StatusCode
+        else {
+            print("client error \(event.error)")
+            return
+        }
+
+        needUpdateConfigParams = true
     }
 }
 
@@ -197,5 +264,14 @@ extension ViewController: CentrifugeSubscriptionDelegate {
     
     func onLeave(_ s: CentrifugeSubscription, _ e: CentrifugeLeaveEvent) {
         print("client left channel \(s.channel), user ID \(e.user)")
+    }
+}
+
+extension ViewController {
+    func headers(token: String?) -> [String: String] {
+        guard let token else {
+            return [:]
+        }
+        return [RunParams.authHeaderKey: RunParams.authHeaderValue(token: token)]
     }
 }

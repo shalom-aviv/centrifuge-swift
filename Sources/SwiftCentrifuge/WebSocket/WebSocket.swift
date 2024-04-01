@@ -41,7 +41,7 @@ enum CloseCode : UInt16 {
     case messageTooBig          = 1009
 }
 
-enum ErrorType: Error {
+public enum ErrorType: Error {
     case outputStreamWriteError //output stream error during write
     case compressionError
     case invalidSSLError //Invalid SSL certificate
@@ -51,10 +51,10 @@ enum ErrorType: Error {
     case closeError //There was an error during the close (socket probably has been dereferenced)
 }
 
-struct WSError: Error {
-    let type: ErrorType
-    let message: String
-    let code: Int
+public struct WSError: Error {
+    public let type: ErrorType
+    public let message: String
+    public let code: Int
 }
 
 //WebSocketClient is setup to be dependency injection for testing

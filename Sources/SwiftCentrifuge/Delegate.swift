@@ -124,6 +124,7 @@ public struct CentrifugeServerLeaveEvent {
 }
 
 public protocol CentrifugeClientDelegate: AnyObject {
+    func onUpdateClientConfigParams(_ client: CentrifugeClient) -> Bool
     func onConnected(_ client: CentrifugeClient, _ event: CentrifugeConnectedEvent)
     func onDisconnected(_ client: CentrifugeClient, _ event: CentrifugeDisconnectedEvent)
     func onConnecting(_ client: CentrifugeClient, _ event: CentrifugeConnectingEvent)
@@ -141,6 +142,7 @@ public protocol CentrifugeClientDelegate: AnyObject {
 }
 
 public extension CentrifugeClientDelegate {
+    func onUpdateClientConfigParams(_ client: CentrifugeClient) -> Bool { false }
     func onConnected(_ client: CentrifugeClient, _ event: CentrifugeConnectedEvent) {}
     func onDisconnected(_ client: CentrifugeClient, _ event: CentrifugeDisconnectedEvent) {}
     func onConnecting(_ client: CentrifugeClient, _ event: CentrifugeConnectingEvent) {}
