@@ -4,31 +4,49 @@
 //
 
 import UIKit
-import SwiftCentrifuge
 
 public class CentrifugeClientPlus {
     fileprivate let syncQueue: DispatchQueue
+    fileprivate let delegateQueue: DispatchQueue
     fileprivate let centrifugeClient: CentrifugeClient
     fileprivate let centrifugeClientPlusDelegate: CentrifugeClientPlusDelegate
+    fileprivate let connection: CentrifugePlusConnection
 
     deinit {
-        NotificationCenter.default.removeObserver(self)
+        removeAppActivityObserving()
     }
 
-    public init(endpoint: String, config: CentrifugeClientConfig, delegate: CentrifugeClientDelegate? = nil) {
+    public init(endpoint: String, config: CentrifugeClientConfig, delegateQueue: DispatchQueue? = nil, delegate: CentrifugeClientDelegate? = nil) {
         let syncQueue = DispatchQueue(label: "com.centrifugal.centrifugeplus-swift.sync<\(UUID().uuidString)>")
-        let centrifugeClientPlusDelegate = CentrifugeClientPlusDelegate(syncQueue: syncQueue, delegate: delegate)
+        let delegateQueue = delegateQueue ?? DispatchQueue(label: "com.centrifugal.centrifugeplus-swift.delegate<\(UUID().uuidString)>")
+        let connection = CentrifugePlusConnection()
+        let centrifugeClientPlusDelegate = CentrifugeClientPlusDelegate(
+            connection: connection,
+            syncQueue: syncQueue,
+            delegate: delegate,
+            delegateQueue: delegateQueue
+        )
 
+        self.connection = connection
         self.syncQueue = syncQueue
+        self.delegateQueue = delegateQueue
         self.centrifugeClientPlusDelegate = centrifugeClientPlusDelegate
         self.centrifugeClient = CentrifugeClient(
             endpoint: endpoint,
             config: config,
             delegate: centrifugeClientPlusDelegate
         )
+    }
+}
 
-        NotificationCenter.default.addObserver(self, selector: #selector(appActiveEvent), name: UIApplication.willResignActiveNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(appInactiveEvent), name: UIApplication.didBecomeActiveNotification, object: nil)
+fileprivate extension CentrifugeClientPlus {
+    func addAppActivityObserving() {
+        NotificationCenter.default.addObserver(self, selector: #selector(appActiveEvent), name: NSNotification.Name.UIApplicationWillResignActive, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(appInactiveEvent), name: NSNotification.Name.UIApplicationDidBecomeActive, object: nil)
+    }
+
+    func removeAppActivityObserving() {
+        NotificationCenter.default.removeObserver(self)
     }
 }
 
@@ -44,14 +62,36 @@ public extension CentrifugeClientPlus {
      Connect to server.
      */
     func connect() {
-        syncQueue.async { [weak self] in self?.centrifugeClient.connect() }
+        syncQueue.async { [weak self] in
+            guard
+                let self,
+                self.connection.isReadyToConnect
+            else {
+                return
+            }
+
+            self.connection.makeAlive()
+            self.centrifugeClient.connect()
+        }
     }
 
     /**
      Disconnect from server.
      */
     func disconnect() {
-        syncQueue.async { [weak self] in self?.centrifugeClient.disconnect() }
+        syncQueue.async { [weak self] in
+            guard let self else { return }
+            switch self.centrifugeClient.state {
+            case .disconnected:
+                centrifugeClientPlusDelegate.processDisconnectInPauseState(self.centrifugeClient)
+            case .connected, .connecting:
+                guard !self.connection.isAlreadyDisconnecting else {
+                    return
+                }
+                self.connection.makeDisconnecting()
+                self.centrifugeClient.disconnect()
+            }
+        }
     }
 
     /**
@@ -59,7 +99,12 @@ public extension CentrifugeClientPlus {
      Schedules a reconnect immediately if one was pending.
      */
     func resetReconnectState() {
-        syncQueue.async { [weak self] in self?.centrifugeClient.resetReconnectState() }
+        syncQueue.async { [weak self] in
+            guard let self, self.connection.isAlive else {
+                return
+            }
+            self.centrifugeClient.resetReconnectState()
+        }
     }
 
     /**
@@ -177,10 +222,26 @@ public extension CentrifugeClientPlus {
 
 private extension CentrifugeClientPlus {
     @objc func appActiveEvent() {
-        
+        syncQueue.async { [weak self] in
+            guard let self, self.connection.isResumable else {
+                return
+            }
+            if self.centrifugeClient.state == .disconnected {
+                self.connection.makeAlive()
+                self.centrifugeClient.connect()
+            } else {
+                self.connection.makeAutoResumable()
+            }
+        }
     }
 
     @objc func appInactiveEvent() {
-
+        syncQueue.async { [weak self] in
+            guard let self, self.connection.isAlive else {
+                return
+            }
+            self.connection.makePause()
+            self.centrifugeClient.disconnect()
+        }
     }
 }
