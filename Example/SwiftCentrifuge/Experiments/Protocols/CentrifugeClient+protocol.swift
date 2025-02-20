@@ -9,23 +9,6 @@
 import Foundation
 import SwiftCentrifuge
 
-extension CentrifugeClient: Client {
-    /// Static constructor that create CentrifugeClient and return it as Client protocol
-    ///
-    /// - Parameters:
-    ///   - url: protobuf URL endpoint of Centrifugo/Centrifuge.
-    ///   - config: config object.
-    ///   - delegate: delegate protocol implementation to react on client events.
-    static func newClient(endpoint: String, config: CentrifugeClientConfig, delegate: CentrifugeClientDelegate? = nil) -> Client {
-        CentrifugeClient(
-            endpoint: endpoint,
-            config: config,
-            delegate: delegate
-        )
-    }
-}
-
-
 protocol Client: AnyObject {
     var delegate: CentrifugeClientDelegate? { get set }
 

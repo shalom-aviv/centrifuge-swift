@@ -7,8 +7,6 @@ import Foundation
 import SwiftCentrifuge
 
 final class CentrifugeClientPlusDelegate {
-    private let disconnectedCodeDisconnectCalled = 0
-
     private let connection: CentrifugePlusConnection
     private let syncQueue: DispatchQueue
     private let delegateQueue: DispatchQueue
@@ -32,7 +30,7 @@ extension CentrifugeClientPlusDelegate {
         syncQueue.async { [weak self] in
             self?.connection.makeDisconnected()
             self?.delegateQueue.async {
-                self?.clientDelegate?.onDisconnected(client, .init(code: disconnectedCodeDisconnectCalled, reason: "disconnect called"))
+                self?.clientDelegate?.onDisconnected(client, .disconnectCalled)
             }
         }
     }
@@ -53,13 +51,13 @@ extension CentrifugeClientPlusDelegate: CentrifugeClientDelegate {
                 switch pauseState {
                 case .autoRestore:
                     delegateQueue.async { [weak clientDelegate] in
-                        clientDelegate?.onConnecting(client, CentrifugeConnectingEvent(code: connectingCodeConnectCalled, reason: "pause called"))
+                        clientDelegate?.onConnecting( client, .connectCalled)
                     }
                     self.connection.makeAlive()
                     client.connect()
                 case .awaitRestoreEvent:
                     delegateQueue.async { [weak clientDelegate] in
-                        clientDelegate?.onConnecting(client, CentrifugeConnectingEvent(code: connectingCodeConnectCalled, reason: "pause called"))
+                        clientDelegate?.onConnecting( client, .connectCalled)
                     }
                     break
                 case .disconnectCalled:
