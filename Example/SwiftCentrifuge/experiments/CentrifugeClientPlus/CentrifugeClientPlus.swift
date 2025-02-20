@@ -4,6 +4,7 @@
 //
 
 import UIKit
+import SwiftCentrifuge
 
 public class CentrifugeClientPlus {
     fileprivate let syncQueue: DispatchQueue
@@ -41,8 +42,8 @@ public class CentrifugeClientPlus {
 
 fileprivate extension CentrifugeClientPlus {
     func addAppActivityObserving() {
-        NotificationCenter.default.addObserver(self, selector: #selector(appActiveEvent), name: NSNotification.Name.UIApplicationWillResignActive, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(appInactiveEvent), name: NSNotification.Name.UIApplicationDidBecomeActive, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(appActiveEvent), name: UIApplication.willResignActiveNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(appInactiveEvent), name: UIApplication.didBecomeActiveNotification, object: nil)
     }
 
     func removeAppActivityObserving() {

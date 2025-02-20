@@ -4,8 +4,11 @@
 //
 
 import Foundation
+import SwiftCentrifuge
 
 final class CentrifugeClientPlusDelegate {
+    private let disconnectedCodeDisconnectCalled = 0
+
     private let connection: CentrifugePlusConnection
     private let syncQueue: DispatchQueue
     private let delegateQueue: DispatchQueue

@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import SwiftCentrifuge
 
 extension CentrifugePlusConnection {
     enum State {

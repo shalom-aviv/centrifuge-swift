@@ -13,6 +13,11 @@
 		607FACD81AFB9204008FA782 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 607FACD71AFB9204008FA782 /* ViewController.swift */; };
 		607FACDB1AFB9204008FA782 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 607FACD91AFB9204008FA782 /* Main.storyboard */; };
 		607FACDD1AFB9204008FA782 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 607FACDC1AFB9204008FA782 /* Images.xcassets */; };
+		B27001532D67B25600684672 /* CentrifugeClient+protocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = B27001502D67B25600684672 /* CentrifugeClient+protocol.swift */; };
+		B27001542D67B25600684672 /* CentrifugeSubscription+protocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = B27001512D67B25600684672 /* CentrifugeSubscription+protocol.swift */; };
+		B27001592D67B2AE00684672 /* CentrifugeClientPlusDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B27001562D67B2AE00684672 /* CentrifugeClientPlusDelegate.swift */; };
+		B270015A2D67B2AE00684672 /* CentrifugeClientPlus.swift in Sources */ = {isa = PBXBuildFile; fileRef = B27001552D67B2AE00684672 /* CentrifugeClientPlus.swift */; };
+		B270015B2D67B2AE00684672 /* CentrifugePlusConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = B27001572D67B2AE00684672 /* CentrifugePlusConnection.swift */; };
 		B2D4E30C2D0B5FCB009D6119 /* URLSessionConfiguration+proxy.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2D4E30A2D0B5FCB009D6119 /* URLSessionConfiguration+proxy.swift */; };
 		B2D4E30D2D0B5FCB009D6119 /* ProxySettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2D4E3092D0B5FCB009D6119 /* ProxySettingsViewController.swift */; };
 		DE2E2CA9220FEAC8004541DE /* BasicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE7C1AA8220F0E1A0037AE1E /* BasicTests.swift */; };
@@ -37,6 +42,11 @@
 		607FACD71AFB9204008FA782 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		607FACDA1AFB9204008FA782 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		607FACDC1AFB9204008FA782 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
+		B27001502D67B25600684672 /* CentrifugeClient+protocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CentrifugeClient+protocol.swift"; sourceTree = "<group>"; };
+		B27001512D67B25600684672 /* CentrifugeSubscription+protocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CentrifugeSubscription+protocol.swift"; sourceTree = "<group>"; };
+		B27001552D67B2AE00684672 /* CentrifugeClientPlus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CentrifugeClientPlus.swift; sourceTree = "<group>"; };
+		B27001562D67B2AE00684672 /* CentrifugeClientPlusDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CentrifugeClientPlusDelegate.swift; sourceTree = "<group>"; };
+		B27001572D67B2AE00684672 /* CentrifugePlusConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CentrifugePlusConnection.swift; sourceTree = "<group>"; };
 		B2D4E3092D0B5FCB009D6119 /* ProxySettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProxySettingsViewController.swift; sourceTree = "<group>"; };
 		B2D4E30A2D0B5FCB009D6119 /* URLSessionConfiguration+proxy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "URLSessionConfiguration+proxy.swift"; sourceTree = "<group>"; };
 		DE2E2C9F220FEAC4004541DE /* SwiftCentrifuge_Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SwiftCentrifuge_Tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -85,6 +95,7 @@
 		607FACD21AFB9204008FA782 /* Example for SwiftCentrifuge */ = {
 			isa = PBXGroup;
 			children = (
+				B27001522D67B25600684672 /* experiments */,
 				B2D4E30B2D0B5FCB009D6119 /* proxy */,
 				607FACD51AFB9204008FA782 /* AppDelegate.swift */,
 				607FACD71AFB9204008FA782 /* ViewController.swift */,
@@ -121,6 +132,26 @@
 				DE2E2CA3220FEAC4004541DE /* Info.plist */,
 			);
 			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		B27001522D67B25600684672 /* experiments */ = {
+			isa = PBXGroup;
+			children = (
+				B27001582D67B2AE00684672 /* CentrifugeClientPlus */,
+				B27001502D67B25600684672 /* CentrifugeClient+protocol.swift */,
+				B27001512D67B25600684672 /* CentrifugeSubscription+protocol.swift */,
+			);
+			path = experiments;
+			sourceTree = "<group>";
+		};
+		B27001582D67B2AE00684672 /* CentrifugeClientPlus */ = {
+			isa = PBXGroup;
+			children = (
+				B27001552D67B2AE00684672 /* CentrifugeClientPlus.swift */,
+				B27001562D67B2AE00684672 /* CentrifugeClientPlusDelegate.swift */,
+				B27001572D67B2AE00684672 /* CentrifugePlusConnection.swift */,
+			);
+			path = CentrifugeClientPlus;
 			sourceTree = "<group>";
 		};
 		B2D4E30B2D0B5FCB009D6119 /* proxy */ = {
@@ -248,10 +279,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B27001592D67B2AE00684672 /* CentrifugeClientPlusDelegate.swift in Sources */,
+				B270015A2D67B2AE00684672 /* CentrifugeClientPlus.swift in Sources */,
+				B270015B2D67B2AE00684672 /* CentrifugePlusConnection.swift in Sources */,
 				B2D4E30C2D0B5FCB009D6119 /* URLSessionConfiguration+proxy.swift in Sources */,
 				B2D4E30D2D0B5FCB009D6119 /* ProxySettingsViewController.swift in Sources */,
 				607FACD81AFB9204008FA782 /* ViewController.swift in Sources */,
 				3A451D4028D2EE33004F85A5 /* PrintLogger.swift in Sources */,
+				B27001532D67B25600684672 /* CentrifugeClient+protocol.swift in Sources */,
+				B27001542D67B25600684672 /* CentrifugeSubscription+protocol.swift in Sources */,
 				607FACD61AFB9204008FA782 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
