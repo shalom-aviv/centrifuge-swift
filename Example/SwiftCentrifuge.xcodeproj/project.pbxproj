@@ -22,6 +22,8 @@
 		B2582FB52D67B72800C6ABDB /* CentrifugeClient+protocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2582FAA2D67B72800C6ABDB /* CentrifugeClient+protocol.swift */; };
 		B2582FB62D67B72800C6ABDB /* CentrifugeSubscription+protocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2582FAB2D67B72800C6ABDB /* CentrifugeSubscription+protocol.swift */; };
 		B2582FB72D67B72800C6ABDB /* CentrifugeClient+experiment.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2582FAD2D67B72800C6ABDB /* CentrifugeClient+experiment.swift */; };
+		91D46D152CA2148500223592 /* DeltaFossilTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91D46D142CA2148500223592 /* DeltaFossilTests.swift */; };
+		B2D4E30C2D0B5FCB009D6119 /* URLSessionConfiguration+proxy.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2D4E30A2D0B5FCB009D6119 /* URLSessionConfiguration+proxy.swift */; };		
 		DE2E2CA9220FEAC8004541DE /* BasicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE7C1AA8220F0E1A0037AE1E /* BasicTests.swift */; };
 		DE7C1AA4220F0D950037AE1E /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = DE7C1AA3220F0D950037AE1E /* Launch Screen.storyboard */; };
 /* End PBXBuildFile section */
@@ -53,6 +55,8 @@
 		B2582FAA2D67B72800C6ABDB /* CentrifugeClient+protocol.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "CentrifugeClient+protocol.swift"; sourceTree = "<group>"; };
 		B2582FAB2D67B72800C6ABDB /* CentrifugeSubscription+protocol.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "CentrifugeSubscription+protocol.swift"; sourceTree = "<group>"; };
 		B2582FAD2D67B72800C6ABDB /* CentrifugeClient+experiment.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "CentrifugeClient+experiment.swift"; sourceTree = "<group>"; };
+		91D46D142CA2148500223592 /* DeltaFossilTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeltaFossilTests.swift; sourceTree = "<group>"; };<<
+		B2D4E30A2D0B5FCB009D6119 /* URLSessionConfiguration+proxy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "URLSessionConfiguration+proxy.swift"; sourceTree = "<group>"; };
 		DE2E2C9F220FEAC4004541DE /* SwiftCentrifuge_Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SwiftCentrifuge_Tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		DE2E2CA3220FEAC4004541DE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		DE7C1AA3220F0D950037AE1E /* Launch Screen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = "Launch Screen.storyboard"; sourceTree = "<group>"; };
@@ -181,6 +185,7 @@
 			isa = PBXGroup;
 			children = (
 				DE7C1AA8220F0E1A0037AE1E /* BasicTests.swift */,
+				91D46D142CA2148500223592 /* DeltaFossilTests.swift */,
 			);
 			name = SwiftCentrifugeTests;
 			path = ../../Tests/SwiftCentrifugeTests;
@@ -279,13 +284,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		DE2E2C9D220FEAC4004541DE /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -312,6 +310,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				91D46D152CA2148500223592 /* DeltaFossilTests.swift in Sources */,
 				DE2E2CA9220FEAC8004541DE /* BasicTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
