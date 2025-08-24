@@ -23,13 +23,36 @@ class ViewController: UIViewController {
     
     // Note, this token is only for example purposes, in reality it should be issued by your backend!!
     // This token is built using "secret" as HMAC secret key.
-    private let jwtToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzd2lmdCIsImlhdCI6MTc0Nzk3MzA5M30.mH5xZ2kesDg1xJgqkOEsdOZExNIo35crjTfgYPgBAgs"
-    
+    private var jwtToken: String {
+        if #available(iOS 18.0, *) {
+            // command:>./centrifugo gentoken -c ./config.json -u 333333 -t 3600000
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzMzMzMzMiLCJleHAiOjE3NTkxNDQ5MzQsImlhdCI6MTc1NTU0NDkzNH0.2oHn1uLOdi7pyT6-dTxhPVe42GFPE-xy69BtiYjBbjw"
+        } else {
+            // command:>./centrifugo gentoken -c ./config.json -u 44444 -t 3600000
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0NDQ0NCIsImV4cCI6MTc1OTE0NTcwOSwiaWF0IjoxNzU1NTQ1NzA5fQ.2prXAteEa6iG4h-iem0KE83yyBxKBZ5chcoNCOVGFx0"
+        }
+
+    }
+
     // Note, this sub token is only for example purposes, in reality it should be issued by your backend!!
     // This token is built using "secret" as HMAC secret key for channel "index".
-    private let subToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzd2lmdCIsImlhdCI6MTc0Nzk3MzEyOSwiY2hhbm5lbCI6ImluZGV4In0.m33zSZn45UmvbMWIB_G_Kn4RfU5pPCEVifJc8WqA3Q8"
-    
-    private let endpoint = "ws://127.0.0.1:8000/connection/websocket?cf_protocol=protobuf"
+    private var subToken: String {
+        if #available(iOS 18.0, *) {
+            // command:>./centrifugo gensubtoken -c ./config.json -u 333333 -s index -t 3600000
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzMzMzMzMiLCJleHAiOjE3NTkxNDQ5NjEsImlhdCI6MTc1NTU0NDk2MSwiY2hhbm5lbCI6ImluZGV4In0.quy9RzzMUoBViLqu1IN6aucdcUimrMpbyIc8QsBnkJs"
+        } else {
+            // command:>./centrifugo gensubtoken -c ./config.json -u 44444 -s index -t 3600000
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0NDQ0NCIsImV4cCI6MTc1OTE0NTc3OSwiaWF0IjoxNzU1NTQ1Nzc5LCJjaGFubmVsIjoiaW5kZXgifQ.5XXvzUQGwJNzRSI4-6SNpGh2pKOm9OJTg0VixP8c7ek"
+        }
+    }
+
+    private var endpoint: String {
+        if #available(iOS 18.0, *) {
+            "ws://192.168.1.152:8000/connection/websocket?cf_protocol=protobuf"
+        } else {
+            "ws://127.0.0.1:8000/connection/websocket?cf_protocol=protobuf"
+        }
+    }
     private let channel = "index"
 
     private var proxySetting: ProxySetting = .off {
@@ -305,6 +328,7 @@ extension ViewController {
         case .off:
             config = .init(
                 token: jwtToken,
+//                useNativeWebSocket: true,
                 tokenGetter: {[weak self] event, completion in
                     guard let strongSelf = self else { return }
                     completion(.success(strongSelf.jwtToken))

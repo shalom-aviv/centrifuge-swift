@@ -1,0 +1,47 @@
+{
+    "port": "8000",
+    "admin": "true",
+    "admin_password": "pwd",
+    "admin_secret": "secret",
+    "engine": "memory",
+    "health": "true",
+    "health_handler_prefix": "/healthz",
+    "log_level": "trace",
+    "prometheus": "true",
+    "allow_history_for_anonymous": true,
+    "allow_history_for_subscriber": true,
+    "allow_presence_for_anonymous": true,
+    "allow_presence_for_subscriber": true,
+    "allow_publish_for_anonymous": true,
+    "allow_publish_for_subscriber": true,
+    "allow_subscribe_for_anonymous": true,
+    "allow_subscribe_for_client": true,
+    "force_recovery": true,
+    "history_size": 10,
+    "history_ttl": "300s",
+    "namespaces":
+    [
+        {
+            "allow_subscribe_for_client": true,
+            "history_size": 10,
+            "history_ttl": "300s",
+            "name": "facts"
+        },
+        {
+            "allow_subscribe_for_client": true,
+            "name": "gossips"
+        },
+        {
+            "allow_subscribe_for_client": true,
+            "allow_publish_for_subscriber": true,
+            "allow_presence_for_subscriber": true,
+            "allow_history_for_subscriber": true,
+            "history_size": 10,
+            "history_ttl": "300s",
+            "name": "chat"
+        }
+    ],
+    "presence": true,
+    "secret": "JRTEGGS7496bwYMVORrakk0ibMBKleO3B4kmQFAjSno=",
+    "token_hmac_secret_key": "jwqlroXr3s0NXbG+UazO2GLZVLHB/22kG8n9mJM7fBOGrbxGWo4z3F+TW6DMY4hKsRAp6jQSgTTn7p59E+SJQQ=="
+}
